@@ -40,21 +40,51 @@ let rec comb n l =
 let GroupSuits (cards: list<Card>) = List.groupBy (fun x -> x.Suit) cards
 let GroupCards (cards: list<Card>) = List.groupBy (fun x -> x.Face) cards
 
-let Flushes (cards: list<Card>) = GroupSuits cards |> List.filter (fun (x, y) -> y.Length = 5) |> List.map (fun (x, y) -> x)
-let FourOfAKind (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 4) |> List.map (fun (x, y) -> x)
-let ThreeOfAKind (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 3) |> List.map (fun (x, y) -> x)
-let Pairs (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 2) |> List.map (fun (x, y) -> x)
-let TwoPairs (cards: list<Card>) = comb 2 (Pairs cards)
-let FullHouse (cards: list<Card>) = ThreeOfAKind cards @ Pairs cards
+let FourOfAKindCards (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 4) |> List.map (fun (x, y) -> x)
+let IsFourOfAKind (cards: list<Card>) = (FourOfAKindCards cards).IsEmpty |> not
+
+let ThreeOfAKindCards (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 3) |> List.map (fun (x, y) -> x)
+let IsThreeOfAKind (cards: list<Card>) = (ThreeOfAKindCards cards).IsEmpty |> not
+
+let PairsCards (cards: list<Card>) = GroupCards cards |> List.filter (fun (x, y) -> y.Length = 2) |> List.map (fun (x, y) -> x)
+let IsPair cards = (PairsCards cards).IsEmpty |> not
+
+let TwoPairsCards (cards: list<Card>) = comb 2 (PairsCards cards)
+let IsTwoPair (cards: list<Card>) = (TwoPairsCards cards).IsEmpty |> not
+
+// let FullHouseCards (cards: list<Card>) = ThreeOfAKindCards cards @ PairsCards cards
+let IsFullHouse cards = IsThreeOfAKind cards && IsPair cards
+
+let IsStraight (cards: list<Card>) = List.sort cards |> IsSequential
+let IsFlush (cards: list<Card>) = (GroupSuits cards).Length = 1
+let IsStraightFlush (cards: list<Card>) = IsStraight cards && IsFlush cards
+
+let BestHand (cards: list<Card>) =
+    if IsStraightFlush cards then StraightFlush
+    elif IsFourOfAKind cards then FourOfAKind
+    elif IsFullHouse cards then FullHouse
+    elif IsFlush cards then Flush
+    elif IsStraight cards then Straight
+    elif IsThreeOfAKind cards then ThreeOfAKind
+    elif IsTwoPair cards then TwoPair
+    elif IsPair cards then Pair
+    else HighCard
 
 [<EntryPoint>]
 let main argv =
-    let cards = List.sort [{ Suit= Spades; Face=2}; {Suit=Clubs; Face=2}; {Suit=Hearts; Face=11}; {Suit=Hearts; Face=13}; {Suit=Spades; Face=7}; {Suit=Clubs; Face=9}; {Suit=Hearts; Face=12}]
+    let cards = List.sort [
+        { Suit=Spades; Face=2}
+        { Suit=Clubs;  Face=2}
+        { Suit=Hearts; Face=11}
+        { Suit=Hearts; Face=13}
+        { Suit=Spades; Face=7}
+        { Suit=Clubs;  Face=9}
+        { Suit=Hearts; Face=12}
+    ]
     printfn "Available cards:\n%s" (ToString cards)
     let combinations = comb 5 cards
     let sorted = List.sort combinations
     let out = List.map(ToString) sorted
     printfn "Possible hands:"
-    List.iter (fun x -> printfn "%s\nFlushes: %d\nFour of a Kind: %d\nPairs: %d" (ToString x) (Flushes x).Length (FourOfAKind x).Length (Pairs x).Length) sorted
-    printfn "Sequential? %A" (IsSequential [{Suit=Hearts; Face=1}; {Suit=Hearts; Face=2}; {Suit=Clubs; Face=3}])
+    List.iter (fun x -> printfn "%A: %s" (BestHand x) (ToString x)) sorted
     0 // return an integer exit code
