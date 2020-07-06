@@ -46,7 +46,7 @@ let rec IsSequential (xs: list<Card>) =
     match xs with
     | [] -> true
     | [_] -> true
-    | [x; y] -> int(x.Face) + 1 = int(y.Face) || (x.Face = Face.Ace && y.Face = Face.Two)
+    | [x; y] -> int(x.Face) % 13 + 1 = int(y.Face)
     | head :: next :: tail -> IsSequential [head; next] && IsSequential (next :: tail)
 
 let rec comb n l = 
