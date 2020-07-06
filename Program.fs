@@ -19,6 +19,8 @@ let rec comb n l =
     | _, [] -> []
     | k, (x::xs) -> List.map ((@) [x]) (comb (k-1) xs) @ comb k xs
 
+let GroupSuits (cards: list<Card>) = List.groupBy (fun x -> x.Suit) cards
+let Flushes (cards: list<Card>) = GroupSuits cards |> List.filter (fun (x, y) -> y.Length = 5) |> List.map (fun (x, y) -> x)
 
 [<EntryPoint>]
 let main argv =
@@ -28,6 +30,6 @@ let main argv =
     let sorted = List.sort combinations
     let out = List.map(ToString) sorted
     printfn "Possible hands:"
-    List.iter (fun x -> printfn "%s" x) out
+    List.iter (fun x -> printfn "%s\nFlushes: %d" (ToString x) (Flushes x).Length) sorted
     printfn "Hello World from F#!"
     0 // return an integer exit code
