@@ -23,10 +23,11 @@ let rec comb n l =
 [<EntryPoint>]
 let main argv =
     let cards = List.sort [{ Suit= Spades; Face=2}; {Suit=Clubs; Face=4}; {Suit=Hearts; Face=11}; {Suit=Hearts; Face=13}; {Suit=Spades; Face=7}; {Suit=Clubs; Face=9}; {Suit=Hearts; Face=12}]
-    printfn "%A" cards.Length
+    printfn "Available cards:\n%s" (ToString cards)
     let combinations = comb 5 cards
     let sorted = List.sort combinations
     let out = List.map(ToString) sorted
+    printfn "Possible hands:"
     List.iter (fun x -> printfn "%s" x) out
     printfn "Hello World from F#!"
     0 // return an integer exit code
