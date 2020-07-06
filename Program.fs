@@ -4,15 +4,30 @@ open System
 
 type Suit = Clubs | Diamonds | Hearts | Spades
 
+type Face =
+ | Two = 2
+ | Three = 3
+ | Four = 4
+ | Five = 5
+ | Six = 6
+ | Seven = 7
+ | Eight = 8
+ | Nine = 9
+ | Ten = 10
+ | Jack = 11
+ | Queen = 12
+ | King = 13
+ | Ace = 14
+
 [<StructuredFormatDisplay("{Face} of {Suit}")>]
 type Card =
     {
         Suit: Suit;
-        Face: int;
+        Face: Face;
     }
 
 type PokerHands =
-      StraightFlush
+    | StraightFlush
     | FourOfAKind
     | FullHouse
     | Flush
@@ -28,7 +43,7 @@ let rec IsSequential (xs: list<Card>) =
     match xs with
     | [] -> true
     | [_] -> true
-    | [x; y] -> x.Face + 1 = y.Face
+    | [x; y] -> int(x.Face) + 1 = int(y.Face)
     | head :: next :: tail -> IsSequential [head; next] && IsSequential (next :: tail)
 
 let rec comb n l = 
@@ -73,18 +88,21 @@ let BestHand (cards: list<Card>) =
 [<EntryPoint>]
 let main argv =
     let cards = List.sort [
-        { Suit=Spades; Face=2}
-        { Suit=Clubs;  Face=2}
-        { Suit=Hearts; Face=11}
-        { Suit=Hearts; Face=13}
-        { Suit=Spades; Face=7}
-        { Suit=Clubs;  Face=9}
-        { Suit=Hearts; Face=12}
+        { Suit=Spades; Face=Face.Two}
+        { Suit=Clubs;  Face=Face.Two}
+        { Suit=Hearts; Face=Face.Two}
+        { Suit=Hearts; Face=Face.Seven}
+        { Suit=Spades; Face=Face.Seven}
+        { Suit=Diamonds;  Face=Face.Two}
+        { Suit=Hearts; Face=Face.Queen}
     ]
     printfn "Available cards:\n%s" (ToString cards)
     let combinations = comb 5 cards
     let sorted = List.sort combinations
-    let out = List.map(ToString) sorted
-    printfn "Possible hands:"
-    List.iter (fun x -> printfn "%A: %s" (BestHand x) (ToString x)) sorted
+    // printfn "Possible hands:"
+    // List.iter (fun x -> printfn "%A: %s" (BestHand x) (ToString x)) sorted
+
+    printfn "Best hand:"
+    let hand, cards = sorted |> List.map (fun x -> (BestHand x, x)) |> List.minBy (fun (x, y) -> x)
+    printfn "%A: %A" hand cards
     0 // return an integer exit code
