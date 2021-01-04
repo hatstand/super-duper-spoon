@@ -1,8 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
-
-open System
-
-type Suit = Clubs | Diamonds | Hearts | Spades
+﻿type Suit = Clubs | Diamonds | Hearts | Spades
 
 let suits = [Clubs; Diamonds; Hearts; Spades;]
 
@@ -41,6 +37,8 @@ type PlayerHand =
 
 type Player = {
     Hand: PlayerHand;
+    Stack: int;
+    Bet: int;
 }
 
 type InitialTable = {
@@ -209,9 +207,9 @@ let main argv =
             | Turn t ->
                 printfn "%A %A %A" t.Players t.Flop t.Turn
             | River r ->
-                printfn "%A %A %A %A" r.Players r.Flop r.Turn r.River
+                printfn "%A %A %A %A %A" r.Players r.Flop r.Turn r.River r.Deck.Length
 
-    let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand}; {Hand=EmptyHand}]}
+    let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand; Stack=100; Bet=0;}; {Hand=EmptyHand; Stack=200; Bet=0;}]}
     let d = nextTable initial
     printTable d
     let f = nextTable d
