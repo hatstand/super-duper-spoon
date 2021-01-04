@@ -50,21 +50,25 @@ type InitialTable = {
 
 type DealTable = {
     Players: Player list;
+    Deck: Card list;
 }
 
 type FlopTable = {
     Players: Player list;
+    Deck: Card list;
     Flop: Card * Card * Card;
 }
 
 type TurnTable = {
     Players: Player list;
+    Deck: Card list;
     Flop: Card * Card * Card;
     Turn: Card;
 }
 
 type RiverTable = {
     Players: Player list;
+    Deck: Card list;
     Flop: Card * Card * Card;
     Turn: Card;
     River: Card;
@@ -96,11 +100,12 @@ let nextTable table: Table =
     match table with
     | Initial data ->
         let random = System.Random()
-        let deck =  data.Deck |> List.sortBy (fun _ -> random.Next())
-        let (dealtPlayers, _) = deal data.Players deck
-        Deal {Players=dealtPlayers}
-    | Deal _ ->
-        table
+        let deck = data.Deck |> List.sortBy (fun _ -> random.Next())
+        let (dealtPlayers, deck) = deal data.Players deck
+        Deal {Players=dealtPlayers; Deck=deck}
+    | Deal data ->
+        let (flop, deck) = data.Deck |> List.splitAt 3
+        Flop { Players=data.Players; Deck=deck; Flop=(flop.Item 0, flop.Item 1, flop.Item 2); }
     | _ ->
         table
 
@@ -188,16 +193,20 @@ let main argv =
     let hand, cards = sorted |> List.map (fun x -> (BestHand x, x)) |> List.minBy (fun (x, y) -> x)
     printfn "%A: %A" hand cards
 
+    let printTable t =
+        match t with
+            | Deal d ->
+                printfn "%A" d.Players
+            | Initial(_) -> failwith "Not Implemented"
+            | Flop f ->
+                printfn "%A %A" f.Players f.Flop
+            | Turn(_) -> failwith "Not Implemented"
+            | River(_) -> failwith "Not Implemented"
 
     let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand}; {Hand=EmptyHand}]}
-    let n = nextTable initial
-
-    match n with
-        | Deal d ->
-            printfn "%A" d.Players
-        | Initial(_) -> failwith "Not Implemented"
-        | Flop(_) -> failwith "Not Implemented"
-        | Turn(_) -> failwith "Not Implemented"
-        | River(_) -> failwith "Not Implemented"
+    let d = nextTable initial
+    printTable d
+    let f = nextTable d
+    printTable f
 
     0 // return an integer exit code
