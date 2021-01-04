@@ -46,11 +46,11 @@ type InitialTable = {
     Deck: Card list;
 }
 
-type DealTable = {
-    Players: Player list;
-    Deck: Card list;
-    Table: Card list;
-}
+type DealTable =
+    { Players: Player list
+      Deck: Card list
+      Table: Card list }
+    member this.Pot = this.Players |> List.sumBy (fun x -> x.Bet)
 
 type Table =
     | Initial of InitialTable
@@ -89,6 +89,27 @@ let nextTable table: Table =
         Deal { Players=data.Players; Deck=deck; Table=river :: data.Table }
     | _ ->
         failwith "invalid table state"
+
+
+let fold table: Table =
+    match table with
+    | Deal data when not data.Players.IsEmpty ->
+        Deal { data with Players=data.Players.Tail }
+    | _ -> failwith "invalid table state"
+
+let check table: Table =
+    match table with
+    | Deal data when not data.Players.IsEmpty ->
+        let head :: tail = data.Players
+        Deal { data with Players=tail @ [head] }
+    | _ -> failwith "invalid table state"
+
+let bet table: Table =
+    match table with
+    | Deal data when not data.Players.IsEmpty ->
+        let head :: tail = data.Players
+        Deal { data with Players=tail @ [{ head with Bet=10; Stack=head.Stack-10 }] }
+    | _ -> failwith "invalid table state"
 
 
 type PokerHands =
