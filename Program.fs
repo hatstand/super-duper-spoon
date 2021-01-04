@@ -4,6 +4,8 @@ open System
 
 type Suit = Clubs | Diamonds | Hearts | Spades
 
+let suits = [Clubs; Diamonds; Hearts; Spades;]
+
 type Face =
  | Two = 1
  | Three = 2
@@ -19,12 +21,89 @@ type Face =
  | King = 12
  | Ace = 13
 
+let faces: Face list = [Face.Two; Face.Three; Face.Four; Face.Five; Face.Six; Face.Seven; Face.Eight; Face.Nine; Face.Ten; Face.Jack; Face.Queen; Face.King; Face.Ace;]
+
 [<StructuredFormatDisplay("{Face} of {Suit}")>]
 type Card =
     {
         Suit: Suit;
         Face: Face;
     }
+
+let createDeck: Card list =
+    List.allPairs faces suits |> List.map (fun (f, s) -> {Face=f; Suit=s;})
+
+type TexasHand = Card * Card
+
+type PlayerHand =
+    | EmptyHand
+    | TexasHand of Card * Card
+
+type Player = {
+    Hand: PlayerHand;
+}
+
+type InitialTable = {
+    Players: Player list;
+    Deck: Card list;
+}
+
+type DealTable = {
+    Players: Player list;
+}
+
+type FlopTable = {
+    Players: Player list;
+    Flop: Card * Card * Card;
+}
+
+type TurnTable = {
+    Players: Player list;
+    Flop: Card * Card * Card;
+    Turn: Card;
+}
+
+type RiverTable = {
+    Players: Player list;
+    Flop: Card * Card * Card;
+    Turn: Card;
+    River: Card;
+}
+
+type Table =
+    | Initial of InitialTable
+    | Deal of DealTable
+    | Flop of FlopTable
+    | Turn of TurnTable
+    | River of RiverTable
+
+let dealACard (deck: Card list): Card * Card list =
+    match deck with
+    | head :: tail ->
+        (head, tail)
+    | [] ->
+        failwith "empty deck"
+
+let deal (players: Player list) (deck: Card list): Player list * Card list =
+    let (players, deck) = players |> List.scan (fun state player ->
+        let (ps, deck) = state
+        let (cards, newDeck) = deck |> List.splitAt 2
+        let newP = { player with Hand=TexasHand (cards.Item 0, cards.Item 1) }
+        (newP:: ps, newDeck)) ([], deck) |> List.last
+    (players, deck)
+
+let nextTable table: Table =
+    match table with
+    | Initial data ->
+        let random = System.Random()
+        let deck =  data.Deck |> List.sortBy (fun _ -> random.Next())
+        let (dealtPlayers, _) = deal data.Players deck
+        Deal {Players=dealtPlayers}
+    | Deal _ ->
+        table
+    | _ ->
+        table
+
 
 type PokerHands =
     | StraightFlush
@@ -108,4 +187,17 @@ let main argv =
     printfn "Best hand:"
     let hand, cards = sorted |> List.map (fun x -> (BestHand x, x)) |> List.minBy (fun (x, y) -> x)
     printfn "%A: %A" hand cards
+
+
+    let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand}; {Hand=EmptyHand}]}
+    let n = nextTable initial
+
+    match n with
+        | Deal d ->
+            printfn "%A" d.Players
+        | Initial(_) -> failwith "Not Implemented"
+        | Flop(_) -> failwith "Not Implemented"
+        | Turn(_) -> failwith "Not Implemented"
+        | River(_) -> failwith "Not Implemented"
+
     0 // return an integer exit code
