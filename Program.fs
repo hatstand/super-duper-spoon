@@ -49,35 +49,12 @@ type InitialTable = {
 type DealTable = {
     Players: Player list;
     Deck: Card list;
-}
-
-type FlopTable = {
-    Players: Player list;
-    Deck: Card list;
-    Flop: Card * Card * Card;
-}
-
-type TurnTable = {
-    Players: Player list;
-    Deck: Card list;
-    Flop: Card * Card * Card;
-    Turn: Card;
-}
-
-type RiverTable = {
-    Players: Player list;
-    Deck: Card list;
-    Flop: Card * Card * Card;
-    Turn: Card;
-    River: Card;
+    Table: Card list;
 }
 
 type Table =
     | Initial of InitialTable
     | Deal of DealTable
-    | Flop of FlopTable
-    | Turn of TurnTable
-    | River of RiverTable
 
 let dealACard (deck: Card list): Card * Card list =
     match deck with
@@ -100,18 +77,18 @@ let nextTable table: Table =
         let random = System.Random()
         let deck = data.Deck |> List.sortBy (fun _ -> random.Next())
         let (dealtPlayers, deck) = deal data.Players deck
-        Deal {Players=dealtPlayers; Deck=deck}
-    | Deal data ->
+        Deal {Players=dealtPlayers; Deck=deck; Table=[]}
+    | Deal data when data.Table.IsEmpty ->
         let (flop, deck) = data.Deck |> List.splitAt 3
-        Flop { Players=data.Players; Deck=deck; Flop=(flop.Item 0, flop.Item 1, flop.Item 2); }
-    | Flop data ->
+        Deal { Players=data.Players; Deck=deck; Table=flop; }
+    | Deal data when data.Table.Length = 3 ->
         let turn :: deck = data.Deck
-        Turn { Players=data.Players; Deck=deck; Flop=data.Flop; Turn=turn; }
-    | Turn data ->
+        Deal { Players=data.Players; Deck=deck; Table=turn :: data.Table }
+    | Deal data when data.Table.Length = 4 ->
         let river :: deck = data.Deck
-        River { Players=data.Players; Deck=deck; Flop=data.Flop; Turn=data.Turn; River=river; }
+        Deal { Players=data.Players; Deck=deck; Table=river :: data.Table }
     | _ ->
-        table
+        failwith "invalid table state"
 
 
 type PokerHands =
@@ -200,14 +177,8 @@ let main argv =
     let printTable t =
         match t with
             | Deal d ->
-                printfn "%A" d.Players
+                printfn "%A" d.Table
             | Initial(_) -> failwith "Not Implemented"
-            | Flop f ->
-                printfn "%A %A" f.Players f.Flop
-            | Turn t ->
-                printfn "%A %A %A" t.Players t.Flop t.Turn
-            | River r ->
-                printfn "%A %A %A %A %A" r.Players r.Flop r.Turn r.River r.Deck.Length
 
     let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand; Stack=100; Bet=0;}; {Hand=EmptyHand; Stack=200; Bet=0;}]}
     let d = nextTable initial
