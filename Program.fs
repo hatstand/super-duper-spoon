@@ -106,6 +106,12 @@ let nextTable table: Table =
     | Deal data ->
         let (flop, deck) = data.Deck |> List.splitAt 3
         Flop { Players=data.Players; Deck=deck; Flop=(flop.Item 0, flop.Item 1, flop.Item 2); }
+    | Flop data ->
+        let turn :: deck = data.Deck
+        Turn { Players=data.Players; Deck=deck; Flop=data.Flop; Turn=turn; }
+    | Turn data ->
+        let river :: deck = data.Deck
+        River { Players=data.Players; Deck=deck; Flop=data.Flop; Turn=data.Turn; River=river; }
     | _ ->
         table
 
@@ -200,13 +206,19 @@ let main argv =
             | Initial(_) -> failwith "Not Implemented"
             | Flop f ->
                 printfn "%A %A" f.Players f.Flop
-            | Turn(_) -> failwith "Not Implemented"
-            | River(_) -> failwith "Not Implemented"
+            | Turn t ->
+                printfn "%A %A %A" t.Players t.Flop t.Turn
+            | River r ->
+                printfn "%A %A %A %A" r.Players r.Flop r.Turn r.River
 
     let initial = Initial { Deck=createDeck; Players=[{Hand=EmptyHand}; {Hand=EmptyHand}]}
     let d = nextTable initial
     printTable d
     let f = nextTable d
     printTable f
+    let t = nextTable f
+    printTable t
+    let r = nextTable t
+    printTable r
 
     0 // return an integer exit code
